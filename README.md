@@ -3,7 +3,8 @@
 tabbed is a simple tabbed X window container.
 
 ## Added Patches
-- [Key Release][1]
+- [Client Number][1]
+- [Key Release][2]
 
 ## Requirements
 ------------
@@ -23,5 +24,6 @@ Afterwards enter the following command to build and install tabbed
 --------------
 See the man page for details.
 
-[1]: https://tools.suckless.org/tabbed/patches/keyrelease/
+[1]: https://tools.suckless.org/tabbed/patches/clientnumber/
+[2]: https://tools.suckless.org/tabbed/patches/keyrelease/
 
