@@ -106,9 +106,9 @@ static void focusonce(const Arg *arg);
 static void focusurgent(const Arg *arg);
 static void fullscreen(const Arg *arg);
 static char *getatom(int a);
-static int getclient(Window w);
+static int  getclient(Window w);
 static XftColor getcolor(const char *colstr);
-static int getfirsttab(void);
+static int  getfirsttab(void);
 static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void initfont(const char *fontstr);
 static Bool isprotodel(int c);
@@ -126,15 +126,16 @@ static void run(void);
 static void sendxembed(int c, long msg, long detail, long d1, long d2);
 static void setcmd(int argc, char *argv[], int);
 static void setup(void);
+static void showbar(const Arg *arg);
 static void sigchld(int unused);
 static void spawn(const Arg *arg);
-static int textnw(const char *text, unsigned int len);
+static int  textnw(const char *text, unsigned int len);
 static void toggle(const Arg *arg);
 static void unmanage(int c);
 static void unmapnotify(const XEvent *e);
 static void updatenumlockmask(void);
 static void updatetitle(int c);
-static int xerror(Display *dpy, XErrorEvent *ee);
+static int  xerror(Display *dpy, XErrorEvent *ee);
 static void xsettitle(Window w, const char *str);
 
 /* variables */
@@ -154,7 +155,7 @@ static void (*handler[LASTEvent]) (const XEvent *) = {
 	[MapRequest] = maprequest,
 	[PropertyNotify] = propertynotify,
 };
-static int bh, obh, wx, wy, ww, wh;
+static int bh, obh, wx, wy, ww, wh, vbh;
 static unsigned int numlockmask;
 static Bool running = True, nextfocus, doinitspawn = True,
             fillagain = False, closelastclient = False,
@@ -171,6 +172,7 @@ static char winid[64];
 static char **cmd;
 static char *wmname = "tabbed";
 static const char *geometry;
+static Bool barvisibility = False;
 
 char *argv0;
 
@@ -326,9 +328,18 @@ void
 drawbar(void)
 {
 	XftColor *col;
-	int c, cc, fc, width;
+	int c, cc, fc, width, nbh;
 	char *name = NULL;
 	char tabtitle[256];
+
+  nbh = barvisibility ? vbh : 0;
+	if (nbh != bh) {
+		bh = nbh;
+		for (c = 0; c < nclients; c++)
+			XMoveResizeWindow(dpy, clients[c]->win, 0, bh, ww, wh-bh);
+	}
+
+	if (bh == 0) return;
 
 	if (nclients == 0) {
 		dc.x = 0;
@@ -370,7 +381,6 @@ drawbar(void)
 		} else {
 			col = clients[c]->urgent ? dc.urg : dc.norm;
 		}
-		// drawtext(clients[c]->name, col);
 		snprintf(tabtitle, sizeof(tabtitle), "%d: %s", c + 1, clients[c]->name);
 		drawtext(tabtitle, col);
 		dc.x += dc.w;
@@ -1015,7 +1025,7 @@ setup(void)
 	screen = DefaultScreen(dpy);
 	root = RootWindow(dpy, screen);
 	initfont(font);
-	bh = dc.h = dc.font.height + 2;
+	vbh = dc.h = barHeight;
 
 	/* init atoms */
 	wmatom[WMDelete] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
@@ -1107,6 +1117,13 @@ setup(void)
 
 	nextfocus = foreground;
 	focus(-1);
+}
+
+void
+showbar(const Arg *arg)
+{
+	barvisibility = arg->i;
+	drawbar();
 }
 
 void
